@@ -1,0 +1,40 @@
+<html>
+<head>
+  <title>D3 in Action Chapter 1 - Example 8</title>
+  <meta charset="utf-8" />
+<script src="d3.v4.min.js" type="text/JavaScript"></script>
+</head>
+<style>
+svg {
+  position: absolute;
+  height: 500px;
+  width: 500px;
+  border: 1px solid lightgray;
+}
+</style>
+<body>
+
+<div id="vizcontainer">
+  <svg></svg>
+</div>
+</body>
+  <footer>
+    
+<script>
+  const svg = d3.select('svg');
+  svg.append('circle').attr('r', 30).attr('cx', 40).attr('cy', 40).style('fill', '#ff00ff').style('stroke', 'black').style('stroke-width', '3px');
+
+  const a = svg.append("text").attr("id", "a").attr("x",20).style("opacity", 0).attr("y",20).text("HELLO WORLD");
+  svg.append("circle").attr("r", 100).attr("cx",parseInt(svg.style('width'))-100).attr("cy",400).style("fill","lightblue");
+
+  const b = d3.select("svg").append("text").attr("id", "b").attr("x",400).attr("y",400).style("opacity", 0).text("Uh, hi.");
+//
+a.transition().delay(1000).style("opacity", 1);
+b.transition().delay(3000).style("opacity", .75);
+//
+d3.selectAll("circle").transition().duration(2000).attr("cy", 200);
+
+</script>
+  </footer>
+
+</html>

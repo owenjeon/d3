@@ -1,0 +1,45 @@
+<html>
+<head>
+  <title>D3 in Action Chapter 2 - Example 7</title>
+  <meta charset="utf-8" />
+<script src="d3.v4.min.js" type="text/JavaScript"></script>
+</head>
+<style>
+  svg {
+    height: 500px;
+    width: 500px;
+    border: 1px solid gray;
+  }
+</style>
+<body>
+
+<div>
+  <svg>
+  </svg>
+</div>
+</body>
+  <footer>
+    
+<script>
+  const data = [14, 68, 150, 430, 19, 1200, 800];
+  const range = d3.extent(data);
+  var yScale = d3.scaleLinear().domain([0, 900, 950, 1000]).range([0, 45, 95, 100]).clamp(true);
+  var cScale = d3.scaleLinear().domain(range).range(['red','blue']);
+var dd = d3.select("svg")
+.selectAll("rect")
+.data(data)
+.enter()
+.append("rect")
+.attr("width", 10)
+.attr("height", function(d) {return yScale(d)})
+.style("fill", (d)=>cScale(d))
+.style("stroke", "red")
+.style("stroke-width", "2px")
+.style("opacity", .25)
+.attr("x", function(d,i) {return i * 15+5})
+.attr("y", function(d) {return 100 - yScale(d)});
+
+</script>
+  </footer>
+
+</html>

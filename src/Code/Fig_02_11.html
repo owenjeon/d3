@@ -1,0 +1,34 @@
+<html>
+<head>
+  <title>D3 in Action Chapter 2 - Example 1</title>
+  <meta charset="utf-8" />
+<script src="d3.v4.min.js" type="text/JavaScript"></script>
+</head>
+<style>
+</style>
+<body>
+
+<div>
+</div>
+</body>
+  <footer>
+    
+<script>
+d3.csv("cities.csv",function(error,data) {dataViz(data)});
+function dataViz(incomingData) {
+  console.log(incomingData);
+  d3.select("body").selectAll("div.cities")
+    .data(incomingData)
+    .enter()
+    .append("div")
+    .attr("class","cities")
+    .style('background-color', '#ff00ff')
+    .style('width', (d)=> `${d.population/50000}px`)
+    .html(function(d,i) {return d.label})
+}
+
+
+</script>
+  </footer>
+
+</html>

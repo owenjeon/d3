@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="/static/d3.v4.min.js"></script>
+  <title>Document</title>
+  <style>
+    .chart svg{ background: #fff; border:1px solid #ddd;}
+    .chart svg g.tick line{stroke-dasharray:5;stroke:gray;}
+  </style>
+</head>
+<body>
+  <div class="chart"></div>
+  <script>
+    const bxSize = {w:500, h:500}
+    const margin = { top: 30, right: 30, bottom: 30, left: 30 };
+    const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+    const svg = d3.select('.chart')
+      .append('svg')
+      .attr('width', bxSize.w).attr('height', bxSize.h)
+      .append('g')
+      .attr('transform', `translate(${margin.left} ${margin.top})`);
+    svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+
+    function getData() {
+      return new Promise(function (resp) {
+        d3.csv('/Code/tweetdata.csv', function (res) {
+          console.log(res);
+          resp(res)
+        })
+      })
+    }
+    async function drawChart(){
+      const data = await getData();
+      const max = d3.max(data, d => {
+        let arr = [];
+        for(let v in d) if(v !== 'day') arr.push(parseInt(d[v]));
+        return d3.max(arr);
+      });
+      const yScale = d3.scaleLinear().domain([0,max+5]).range([height, 0]);
+      const xScale = d3.scaleLinear().domain(d3.extent(data, d=>parseInt(d.day))).range([0, width]);
+      const yAxis = d3.axisLeft(yScale).tickSize(-width);
+      const xAxis = d3.axisBottom(xScale);
+      svg.append('g').call(yAxis);
+      svg.append('g').attr('transform', `translate(0, ${height})`).call(xAxis);
+
+      const g = svg.selectAll('g.circles').data(data).enter().append('g').classed('circles', true);
+      const colors = {favorites:'red', retweets:'orange', tweets:'skyblue'};
+      for( let v in data[0]){
+        if(v === 'day') continue;
+        g.append('circle').attr('cx', d=>xScale(d.day)).attr('cy', d=>yScale(d[v])).attr('r', 5).attr('fill', colors[v]).attr('fill-opacity', 0.5);
+        const line = d3.line()
+          .x(d => xScale(d.day))
+          .y(d => yScale(d[v])).curve(d3.curveMonotoneX);
+        svg.append('path').attr('d', line(data)).attr('fill', 'none').attr('stroke', colors[v]).attr('stroke-width', 2);
+      }
+      //var interpolateTypes = [d3.curveLinear,d3.curveStepBefore,d3.curveStepAfter,d3.curveBasis,d3.curveBasisOpen, d3.curveBasisClosed, d3.curveBundle,d3.curveCardinal,d3.curveCardinal,d3.curveCardinalOpen,d3.curveCardinalClosed,d3.curveNatural];
+
+    }
+    drawChart();
+  </script>
+</body>
+</html>

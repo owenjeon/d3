@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Egghead D3 v4</title>
+  <script src="/static/d3.v4.min.js"></script>
+  <style>
+    .chart svg{ background: #fff; border:1px solid #ddd;}
+  </style>
+</head>
+<body>
+
+<div class="chart">
+
+</div>
+ZOOM LEVEL <button onclick="drawChart(16)">Level 16</button>
+<button onclick="drawChart(15)">Level 15</button>
+<button onclick="drawChart(14)">Level 14</button>
+<button onclick="drawChart(13)">Level 13</button>
+<script>
+function getData(rect) {
+  let query = ''
+  for (v in rect) {
+    query += `&${v}=${rect[v]}`;
+  }
+  return new Promise(function (resp) {
+    d3.json('https://api.zigbang.com/v3/search/getItemByRect?&detail=false' + query + '&items=false&ad=true&room_types=[01,02,03,04,05]', function (res) {
+      resp(res.mapItems)
+    })
+  })
+}
+
+const bxSize = {w:500, h:500}
+const margin = { top: 30, right: 30, bottom: 30, left: 30 };
+const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+const svg = d3.select('.chart')
+  .append('svg')
+  .attr('width', bxSize.w).attr('height', bxSize.h)
+  .append('g')
+  .attr('transform', `translate(${margin.left} ${margin.top})`);
+svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+let g = svg.append('g');
+function d3Transit(select, duration = 700, delay = 0){
+  return select.duration(duration).delay(delay)
+}
+async function drawChart(level = 15){
+  const rect = {
+    lat_south: 37.50353868007362, lat_north: 37.51571722545062, lng_west: 127.01655710189297, lng_east: 127.03149075189559, level: level
+  }
+  const data = await getData(rect);
+
+  (function matchClosetElement(){ //가까운 거리에 있는 원끼리 매칭시키기
+    let prevData = g.selectAll('g').data().map(i=> (i.matchIdx = undefined, i));
+    let nextData = data.map(i=> (i.matchIdx = undefined, i));
+    if(prevData.length > nextData.length) [prevData, nextData] = [nextData, prevData];
+    prevData.forEach((item, index)=>{
+      let min, minObj, minIdx;
+      nextData.forEach((i, dIndex) =>{
+        const dist = Math.sqrt(Math.pow(i.lat - item.lat, 2) + Math.pow(i.lng - item.lng, 2));
+        if(min === undefined || min > dist){
+          min = dist;
+          minObj = i;
+          minIdx = dIndex;
+        }
+      });
+      minObj ? (minObj.matchIdx = item.matchIdx = index, nextData.splice(minIdx, 1)) : (item.matchIdx = undefined);
+    });
+  })();
+
+  let xScale = d3.scaleLinear().domain([rect.lng_west, rect.lng_east]).range([0, width]);
+  let yScale = d3.scaleLinear().domain([rect.lat_north, rect.lat_south]).range([0, height]);
+
+  let xAxis = d3.axisBottom(xScale).ticks(8);
+  let yAxis = d3.axisLeft(yScale).ticks(8);
+
+  svg.append('g').attr('transform', `translate(0, ${height})`).call(xAxis);
+  svg.append('g').call(yAxis);
+
+  let update = g.selectAll('g').data(data, (d) => d.matchIdx);
+  update.transition().call(d3Transit, 1000).attr('transform', d =>  `translate(${xScale(d.lng)} ${yScale(d.lat)})`);
+  update.select('circle').transition().call(d3Transit).attr('r', d=>Math.sqrt(d.view_count)+15).attr('fill-opacity', 0.7);
+  update.select('text').text(d=>d.view_count).transition().call(d3Transit).attr('fill-opacity', 1)
+
+  let exit = update.exit();
+  exit.select('circle').transition().call(d3Transit).attr('fill-opacity', 0);
+  exit.select('text').transition().call(d3Transit).attr('fill-opacity', 0);
+  exit.transition().call(d3Transit, 0, 700).remove();
+
+  let enter = update.enter().append('g');
+  enter.attr('transform', d =>  `translate(${xScale(d.lng)} ${yScale(d.lat)})`);
+
+  enter.append('circle').attr('fill-opacity', 0).transition().call(d3Transit).attr('fill-opacity', 0.7).attr('r', d=>Math.sqrt(d.view_count)+15).attr('fill', '#fc7009');
+  enter.append('text').attr('fill-opacity', 0).transition().call(d3Transit).attr('text-anchor', 'middle').attr('alignment-baseline', 'middle').attr('y', 2).text(d=>d.view_count).attr('fill', 'white').attr('fill-opacity', 1)
+}
+drawChart();
+</script>
+</body>
+</html>
