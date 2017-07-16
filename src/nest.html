@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="//d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+  <div id="chart"></div>
+<script>
+function getData(){
+  const url = '/data/private_edu.csv';
+  return new Promise(function(res, rej){
+    d3.request(url)
+      .mimeType("text/csv")
+      .response(function(xhr) {
+        let columns = [];
+        return d3.csvParseRows(xhr.responseText, function(d, i) {
+          if(i <= 1) return columns.push(d), undefined ;
+          let o = {};
+          d.forEach((item, i)=>{
+            const [a, b] = [columns[0][i], columns[1][i]];
+            if(b){
+              o[a] || (o[a] = {});
+              o[a][b] = item;
+            }else{
+              o[a] = item;
+            }
+          });
+          return o;
+        });
+      })
+      .get(function(d){
+        //console.log(d)
+        const data2 = d3.nest()
+          .key(item=>item["연도"])
+          .entries(d);
+        res(data2);
+      });
+  })
+}
+async function chart(){
+  const data = await getData();
+  const bxSize = {w:1600, h:500}
+  const margin = { top: 30, right: 30, bottom: 30, left: 50 };
+  const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+  const svg = d3.select('#chart')
+    .append('svg')
+    .attr('width', bxSize.w).attr('height', bxSize.h)
+    .append('g')
+    .attr('transform', `translate(${margin.left} ${margin.top})`);
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+  data.map(i=>(i.key = new Date(i.key), i));
+  console.log(data);
+  const keys = getKeys(data);
+  const values = [];
+  data.forEach(i=>{
+    i.values.forEach(j=>{
+      keys.forEach(k=>{
+        k.values.forEach(l=>{
+          values.push(j[k.key][l]);
+        })
+      })
+    })
+  });
+  const timeFormat = d3.timeFormat("%Y");
+  const x = svg.append('g');
+  const y = svg.append('g');
+  function drawChart(data, keys, type){
+    if(type) {
+      data = data.map(i => (i.values.map(j => {
+        for (let v in j) {
+          if (typeof j[v] === "object" && type !== v) delete j[v]
+        }
+        return j;
+      }), i));
+      keys = keys.filter(i=>i.key === type);
+    }
+
+    console.log(keys);
+
+    const xScale = d3.scaleBand().domain(data.map(i=>(i.key))).range([0,width]).padding(0.05);
+    const yScale = d3.scaleLinear().domain([0, Math.max(...values)]).range([height, 0]);
+    const xScaleSchools = d3.scaleBand().domain(data[0].values.map(i=>i["초중고"])).range([0,xScale.bandwidth()]).padding(0.05);
+    const xScaleEduType = d3.scaleBand().domain(keys.map(i=>i.key)).range([0,xScaleSchools.bandwidth()]).padding(0.05);
+    const xScaleSubject = keys.map(i=>d3.scaleBand().domain(i.values).range([0,xScaleEduType.bandwidth()]));
+    const colors = d3.scaleOrdinal().range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+    const xAxis = d3.axisBottom(xScale);
+    const yAxis = d3.axisLeft(yScale);
+
+    x.attr('transform', `translate(0 ${height})`).call(xAxis.tickFormat(timeFormat));
+    y.call(yAxis);
+
+    const group = svg.selectAll('g.graph').data(data).enter().append('g').attr('class', 'graph').attr('transform', d=>`translate(${xScale(d.key)} 0)`);
+    const schools = group.selectAll('g.school').data(d=> d.values).enter().append('g').attr('class', 'school').attr('transform', d=>`translate(${xScaleSchools(d["초중고"])} 0)`);
+    const eduType = schools.selectAll('g.edu_type').data(d=> {
+      const arr = [];
+      for( let v in d ){
+        if(d.hasOwnProperty(v) && typeof d[v] === 'object'){
+          arr.push({key:v, values:d[v]})
+        }
+      }
+      return arr;
+    }).enter().append('g').attr('class', 'edu_type').attr('transform', d=>`translate(${xScaleEduType(d.key)} 0)`);
+
+    eduType.selectAll('rect').data(d=>{
+      const arr = [];
+      for( let v in d.values ){
+        if(d.values.hasOwnProperty(v)){
+          arr.push({key:v, values:d.values[v], type: d.key === "예체능, 취미·교양 사교육" ? 0 : 1})
+        }
+      }
+      return arr;
+    }).enter().append('rect')
+      .attr('x', d=>xScaleSubject[d.type](d.key))
+      .attr('y', d=>height - yScale(d.values))
+      .attr('width', d=>xScaleSubject[d.type].bandwidth())
+      .attr('height', d=>yScale(d.values))
+      .attr('fill', d=>colors(d.values + d.type))
+    console.log(keys);
+  }
+  drawChart(data, keys);
+}
+
+function getKeys(data){
+  const fistData = data[0].values[0];
+  const keys = [];
+  for(let v in fistData){
+    if(fistData.hasOwnProperty(v) && typeof fistData[v] === 'object'){
+      keys.push({key:v});
+      for(let v2 in fistData[v]){
+        if(fistData[v].hasOwnProperty(v2)){
+          if(!keys[keys.length - 1].values) keys[keys.length - 1].values = [];
+          keys[keys.length - 1].values.push(v2);
+        }
+      }
+    }
+  }
+  return keys;
+}
+chart();
+</script>
+</body>
+</html>

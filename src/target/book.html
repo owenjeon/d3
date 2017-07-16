@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Egghead D3 v4</title>
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <style>
+    </style>
+</head>
+<body>
+
+<div class="chart">
+</div>
+<script>
+  const bxSize = {w:800, h:350}
+  const margin = { top: 30, right: 30, bottom: 30, left: 50 };
+  const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+  const svg = d3.select('.chart')
+    .append('svg')
+    .attr('width', bxSize.w).attr('height', bxSize.h)
+    .append('g')
+    .attr('transform', `translate(${margin.left} ${margin.top})`);
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#ffffff');
+  function randomScore(){
+    return Math.floor(30+Math.random()*71)
+  }
+  const data = [
+    {chapter:"1. 쌓기나무의 수", classAvg:randomScore(), score: randomScore()},
+    {chapter:"2. 위, 앞, 옆에서 본 모양 그리기", classAvg:randomScore(), score: randomScore()},
+    {chapter:"3. 세 자리 수의 덧셈", classAvg:randomScore(), score: randomScore()},
+    {chapter:"4. 세 자리 수의 뺄셈", classAvg:randomScore(), score: randomScore()},
+    {chapter:"5. 소인수분해", classAvg:randomScore(), score: randomScore()},
+    {chapter:"6. 일차방정식의 활용-여러가지활용문제", classAvg:randomScore(), score: randomScore()},
+    {chapter:"7. 일차방정식의 활용", classAvg:randomScore(), score: randomScore()},
+    {chapter:"8. 일차방정식의 활용", classAvg:randomScore(), score: randomScore()}
+  ];
+
+  const xScale = d3.scaleBand().domain(data.map(d=>d.chapter)).range([0, width]).padding('0.2');
+  const yScale = d3.scaleLinear().domain([0, d3.max(data.reduce((a, b)=>{return console.log(a, b), a.push(b.classAvg, b.score), a}, []))]).range([height, 0]);
+  const xScale2 = d3.scaleBand().domain(['classAvg', 'score']).rangeRound([0,xScale.bandwidth()]).padding('0.05');
+  const color = d3.scaleOrdinal().range(["#ffb22e", "#50b0ff", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"])
+
+  const xAxis = d3.axisBottom(xScale);
+  const yAxis = d3.axisLeft(yScale);
+
+  function wrap(text, width) {
+    text.each(function() {
+      var text = d3.select(this),
+        words = text.text().split(/\s+/).reverse(),
+        word,
+        line = [],
+        lineNumber = 0,
+        lineHeight = 1.1, // ems
+        y = text.attr("y"),
+        dy = parseFloat(text.attr("dy")),
+        tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+      while (word = words.pop()) {
+        line.push(word);
+        tspan.text(line.join(" "));
+        if (tspan.node().getComputedTextLength() > width) {
+          line.pop();
+          tspan.text(line.join(" "));
+          line = [word];
+          tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+        }
+      }
+    });
+  }
+
+  svg.append('g').call(yAxis)
+  svg.append('g').attr('transform', `translate(0 ${height})`).call(xAxis)
+    .selectAll(".tick text")
+    .call(wrap, xScale.bandwidth());
+
+  const bars = svg.selectAll('.bar').data(data).enter().append('g').attr('class', 'bar').attr('transform', d=>`translate(${xScale(d.chapter)} 0)`);
+  bars.selectAll('rect')
+    .data(d=>[
+      { key: 'classAvg', value: d['classAvg']},
+      { key: 'score', value: d['score']}
+    ])
+    .enter().append('rect')
+    .attr('x', d=>xScale2(d.key))
+    .attr('y', d=>yScale(d.value))
+    .attr('width', xScale2.bandwidth())
+    .attr('height', d=>height - yScale(d.value))
+    .style('fill', d=>color(d.key));
+
+</script>
+</body>
+</html>

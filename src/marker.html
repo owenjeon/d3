@@ -43,6 +43,9 @@ let g = svg.append('g');
 function d3Transit(select, duration = 700, delay = 0){
   return select.duration(duration).delay(delay)
 }
+
+const xAxisNode = svg.append('g').attr('transform', `translate(0, ${height})`);
+const yAxisNode = svg.append('g');
 async function drawChart(level = 15){
   const rect = {
     lat_south: 37.50353868007362, lat_north: 37.51571722545062, lng_west: 127.01655710189297, lng_east: 127.03149075189559, level: level
@@ -73,8 +76,8 @@ async function drawChart(level = 15){
   let xAxis = d3.axisBottom(xScale).ticks(8);
   let yAxis = d3.axisLeft(yScale).ticks(8);
 
-  svg.append('g').attr('transform', `translate(0, ${height})`).call(xAxis);
-  svg.append('g').call(yAxis);
+  xAxisNode.call(xAxis);
+  yAxisNode.call(yAxis);
 
   let update = g.selectAll('g').data(data, (d) => d.matchIdx);
   update.transition().call(d3Transit, 1000).attr('transform', d =>  `translate(${xScale(d.lng)} ${yScale(d.lat)})`);

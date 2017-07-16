@@ -1,8 +1,9 @@
 {
   "compileOnSave": true,
+  "module": "es2015",
   "compilerOptions": {
-    "module": "commonjs",
     "target": "es5",
+    "module": "es2015",
     "sourceMap": true,
     "declaration": false,
     "emitDecoratorMetadata": true,

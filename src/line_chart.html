@@ -47,17 +47,17 @@
       svg.append('g').call(yAxis);
       svg.append('g').attr('transform', `translate(0, ${height})`).call(xAxis);
 
-//      const g = svg.selectAll('g.circles').data(data).enter().append('g').classed('circles', true);
-//      const colors = {favorites:'red', retweets:'orange', tweets:'skyblue'};
-//      for( let v in data[0]){
-//        if(v === 'day') continue;
-//        g.append('circle').attr('cx', d=>xScale(d.day)).attr('cy', d=>yScale(d[v])).attr('r', 5).attr('fill', colors[v]).attr('fill-opacity', 0.5);
-//        const line = d3.line()
-//          .x(d => xScale(d.day))
-//          .y(d => yScale(d[v])).curve(d3.curveMonotoneX);
-//        svg.append('path').attr('d', line(data)).attr('fill', 'none').attr('stroke', colors[v]).attr('stroke-width', 2);
-//      }
-      //var interpolateTypes = [d3.curveLinear,d3.curveStepBefore,d3.curveStepAfter,d3.curveBasis,d3.curveBasisOpen, d3.curveBasisClosed, d3.curveBundle,d3.curveCardinal,d3.curveCardinal,d3.curveCardinalOpen,d3.curveCardinalClosed,d3.curveNatural];
+      const g = svg.selectAll('g.circles').data(data).enter().append('g').classed('circles', true);
+      const colors = {favorites:'red', retweets:'orange', tweets:'skyblue'};
+      for( let v in data[0]){
+        if(v === 'day') continue;
+        g.append('circle').attr('cx', d=>xScale(d.day)).attr('cy', d=>yScale(d[v])).attr('r', 5).attr('fill', colors[v]).attr('fill-opacity', 0.5);
+        const line = d3.line()
+          .x(d => (xScale(d.day)))
+          .y(d => yScale(d[v])).curve(d3.curveMonotoneX);
+        svg.append('path').attr('d', line(data)).attr('fill', 'none').attr('stroke', colors[v]).attr('stroke-width', 2);
+      }
+      var interpolateTypes = [d3.curveLinear,d3.curveStepBefore,d3.curveStepAfter,d3.curveBasis,d3.curveBasisOpen, d3.curveBasisClosed, d3.curveBundle,d3.curveCardinal,d3.curveCardinal,d3.curveCardinalOpen,d3.curveCardinalClosed,d3.curveNatural];
 
     }
     drawChart();

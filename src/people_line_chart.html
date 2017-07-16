@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="/static/d3.v4.min.js"></script>
+  <title>Document</title>
+  <style>
+    .chart svg{ background: #fff; border:1px solid #ddd;}
+    .chart svg g.tick line{stroke-dasharray:5;stroke:gray;}
+    .flex{ display: flex;flex-wrap: wrap;}
+    .flex > div{padding:5px 10px; font-size:13px;margin:3px; color: #fff;}
+  </style>
+</head>
+<body>
+  <div class="chart"></div>
+  <script>
+    const bxSize = {w:800, h:500}
+    const margin = { top: 30, right: 30, bottom: 30, left: 50 };
+    const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+    const svg = d3.select('.chart')
+      .append('svg')
+      .attr('width', bxSize.w).attr('height', bxSize.h)
+      .append('g')
+      .attr('transform', `translate(${margin.left} ${margin.top})`);
+    svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+
+    function getData() {
+      return new Promise(function (resp) {
+        d3.csv('/data/people_movement3.csv', function (res) {
+          let group = {};
+          for( let v = 0 ; v < res.length ; v++){
+            const split = res[v].id.split('.');
+            !group[split[1]] ? (group[split[1]] = []) : "";
+            group[split[1]].push(Object.assign(res[v], {id: new Date((split[0] - (25567 + 1))*86400*1000)}));
+          }
+          group.columns = res.columns;
+          group.columns.shift();
+          resp(group)
+        })
+      })
+    }
+    let selectedGoo = "종로구";
+    async function drawChart(){
+      const datas = await getData();
+      const yScale = d3.scaleLinear();
+      const xScale = d3.scaleTime();
+      const yAxisEle = svg.append('g');
+      const xAxisEle = svg.append('g').attr('transform', `translate(0, ${height})`);
+
+      const colors = d3.scaleLinear().domain([0, datas.columns.length]).range(['orange', 'blue']).interpolate(d3.interpolateHcl);
+      const div = d3.select("body").append('div').attr('class', 'flex').selectAll('div').data(datas.columns).enter().append('div').style('background-color', d=> colors(datas.columns.indexOf(d))).text(d=>d);
+      const path = svg.append('path');
+      const types = [];
+      for (let v in datas){
+        datas.hasOwnProperty(v) && (v !== 'columns') && types.push(v);
+      }
+
+      function draw(type = "총전입 (명)"){
+        const data = datas[type];
+        const max = d3.max(data, d => {
+          let arr = [];
+          for(let v in d) if(v !== 'id') arr.push(parseInt(d[v]));
+          return d3.max(arr);
+        });
+        const min = d3.min(data, d => {
+          let arr = [];
+          for(let v in d) if(v !== 'id') arr.push(parseInt(d[v]));
+          return d3.min(arr);
+        });
+        yScale.domain([min-5,max+5]).range([height, 0]);
+        xScale.domain(d3.extent(data, d=>d.id)).range([0, width]);
+        const yAxis = d3.axisLeft(yScale);
+        const xAxis = d3.axisBottom(xScale);
+        xAxisEle.call(xAxis);
+        yAxisEle.transition().duration(500).call(yAxis);
+        const g = svg.selectAll('g.goo');
+        const update = g.data(data, (d, i)=> i);
+        const enter = update.enter().append('g').classed('goo', true);
+
+        datas.columns.forEach((v, i) =>{
+          update.select('circle:nth-child('+(i+1)+')').transition().duration(500).attr('cy', d=>(yScale(d[v])));
+          enter.append('circle').attr('cx', d=>xScale(d.id)).attr('cy', d=>yScale(d[v])).attr('r', 5).attr('fill', colors(datas.columns.indexOf(v))).attr('fill-opacity', 0.5);
+        });
+        div.on('click', null);
+        div.on('click', function() {
+          const v = this.innerHTML;
+          selectedGoo = v;
+          clickGoo(v, data)
+        });
+        clickGoo(selectedGoo, data);
+      }
+      function clickGoo(v, data){
+        const line = d3.line()
+          .x(d => (xScale(d.id)))
+          .y(d => yScale(d[v])).curve(d3.curveMonotoneX);
+        path.transition().duration(600).attr('d', line(data)).attr('fill', 'none').attr('stroke', colors(datas.columns.indexOf(v))).attr('stroke-width', 2)
+      }
+      d3.select('body').append('div').selectAll('button').data(types).enter().append('button').text(d=>d)
+        .on('click', function(d){
+          draw(d);
+        });
+      draw();
+
+    }
+    drawChart();
+  </script>
+</body>
+</html>

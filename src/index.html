@@ -1,25 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Egghead D3 v4</title>
-  <script src="//d3js.org/d3.v4.min.js"></script>
-  <style>
-    .chart {
-      background: lightgray;
-      border: 1px solid black;
-      min-width: 200px;
-      min-height: 350px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Egghead D3 v4</title>
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <style>
+        .chart {
+            background: lightgray;
+            border: 1px solid black;
+            width: 400px;
+            height: 400px;
+        }
+
+        svg {
+            width: 400px; height: 400px;
+        }
+    </style>
 </head>
 <body>
 
 <div class="chart">
-  <div>Billy</div>
-  <div>Cindy</div>
-  <div>Walter</div>
+    <svg></svg>
 </div>
-<script src="static/app.js"></script>
+<script>
+  const x = d3.scaleLinear().domain([20, 80]).range([0, 120]);
+  x(50); // 60r("r", 3);
+    console.log(x(20))
+</script>
 </body>
 </html>

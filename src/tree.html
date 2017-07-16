@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="/static/d3.v4.min.js"></script>
+  <title>Pie Chart</title>
+  <style>
+    .node circle {
+      fill: #fff;
+      stroke: steelblue;
+      stroke-width: 3px;
+    }
+
+    .node text { font: 12px sans-serif; }
+
+    .node--internal text {
+      text-shadow: 0 1px 0 #fff, 0 -1px 0 #fff, 1px 0 0 #fff, -1px 0 0 #fff;
+    }
+
+    .link {
+      fill: none;
+      stroke: #ccc;
+      stroke-width: 2px;
+    }
+  </style>
+</head>
+<body>
+<div class="chart"></div>
+<script>
+  const bxSize = {w:1000, h:1000}
+  const margin = { top: 30, right: 30, bottom: 30, left: 30 };
+  const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+  const svg = d3.select('.chart')
+    .append('svg')
+    .attr('width', bxSize.w).attr('height', bxSize.h)
+    .append('g')
+    .attr('transform', `translate(${margin.left} ${margin.top})`);
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+
+  function getData() {
+    return new Promise(function (resp) {
+      d3.json('/static/tree.json', function (res) {
+        console.log(res)
+        resp(res)
+      })
+    })
+  }
+  async function drawPieChart(){
+    const data = await getData();
+
+    var treeMap = d3.tree().size([width, height]);
+
+    let nodes = d3.hierarchy(data);
+    console.log(nodes);
+    debugger;
+    nodes = treeMap(nodes)
+
+    const link = svg.selectAll(".link").data(nodes.descendants().slice(1)).enter().append('path').attr('class', 'link')
+      .attr("d", function(d) {
+        return "M" + d.x + "," + d.y
+          + "C" + d.x + "," + (d.y + d.parent.y) / 2
+          + " " + d.parent.x + "," +  (d.y + d.parent.y) / 2
+          + " " + d.parent.x + "," + d.parent.y;
+      });
+
+    const node = svg.selectAll('g.node').data(nodes.descendants()).enter().append('g')
+      .attr("class", d=>`node ${d.children ? `node-internal` : `node-leaf`}`)
+      .attr('transform', d=>`translate(${d.x} ${d.y})`);
+
+    node.append('circle')
+      .attr('r', 10);
+
+    node.append('text')
+      .attr("y", d=>d.children ? -20 : 20)
+      .attr('dy', '.35em')
+      .style('text-anchor', 'middle')
+      .text(d=>(console.log(d), d.data.name))
+  }
+
+
+
+
+
+  drawPieChart()
+</script>
+</body>
+</html>

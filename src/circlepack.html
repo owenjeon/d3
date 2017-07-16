@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="/static/d3.v4.min.js"></script>
+  <title>Pie Chart</title>
+  <style>
+
+    text {
+      font: 10px sans-serif;
+      text-anchor: middle;
+    }
+
+    .node--hover circle {
+      stroke: #000;
+      stroke-width: 1.2px;
+    }
+  </style>
+</head>
+<body>
+<div class="chart"></div>
+<button data-type="favorites">favorites</button>
+<button data-type="retweets">retweets</button>
+<script>
+  const bxSize = {w:700, h:700}
+  const margin = { top: 30, right: 30, bottom: 30, left: 30 };
+  const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+  const svg = d3.select('.chart')
+    .append('svg')
+    .attr('width', bxSize.w).attr('height', bxSize.h)
+    .append('g')
+    .attr('transform', `translate(${margin.left} ${margin.top})`);
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+
+  function getData() {
+    return new Promise(function (resp) {
+      d3.csv('/static/flare.csv', function (res) {
+        console.log(res)
+        resp(res)
+      })
+    })
+  }
+  var format = d3.format(",d");
+  async function drawPieChart(){
+    const data = await getData();
+    var stratify = d3.stratify().parentId(function(d) { return d.id.substring(0, d.id.lastIndexOf(".")); });
+
+    let root = stratify(data)
+      .sum(d=>d.value)
+      .sort(function(a, b) { return b.value - a.value; });
+    console.log(root)
+    debugger;
+    const pack = d3.pack().size([width, height]).padding(3)
+    pack(root)
+
+    return function(){
+
+      const node = svg.selectAll('g')
+        .data(root.descendants())
+        .enter().append('g')
+        .attr('transform', d => `translate(${d.x} ${d.y})`).each(function(d) { d.node = this; })
+        .attr("class", function(d) { return "node" + (!d.children ? " node--leaf" : d.depth ? "" : " node--root"); })
+        .each(function(d) { d.node = this; });
+      node.append("circle")
+        .attr("r", function(d) { return d.r; })
+        .attr("id", function(d) { return "node-" + d.id; })
+        .style('fill', 'skyblue')
+        .style('stroke', 'black');
+
+      var leaf = node.filter(function(d) { return !d.children; });
+      leaf.append("clipPath")
+        .attr("id", function(d) { return "clip-" + d.id; })
+        .append("use")
+        .attr("xlink:href", function(d) { return "#node-" + d.id + ""; });
+
+      leaf.append("text")
+        .attr("clip-path", function(d) { return "url(#clip-" + d.id + ")"; })
+        .selectAll("tspan")
+        .data(function(d) { return d.id.substring(d.id.lastIndexOf(".") + 1).split(/(?=[A-Z][^A-Z])/g); })
+        .enter().append("tspan")
+        .attr("x", 0)
+        .attr("y", function(d, i, nodes) { return 13 + (i - nodes.length / 2 - 0.5) * 10; })
+        .text(function(d) { return d; });
+      node.append("title")
+        .text(function(d) { return d.id + "\n" + format(d.value); });
+    }
+  }
+
+
+
+
+
+  drawPieChart().then(function(fn){
+      fn();
+  });
+</script>
+</body>
+</html>

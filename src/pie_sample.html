@@ -37,34 +37,28 @@
       el.numTweets = el.values.length;
     });
     const g = svg.append('g').attr('transform', `translate(${width/2}, ${height/2})`);
+    const colors = d3.scaleLinear().domain([0,5]).range(['yellow', 'red']).interpolate(d3.interpolateHsl);
 
     return function(type = 'retweets'){
       const pieChart = d3.pie().sort(null).value(d=>d3.sum(d.values, d2=>d2[type].length));
       const myPie = pieChart(nestedData);
       const newArc = d3.arc().outerRadius(80).innerRadius(30);
-      const labelArc = d3.arc().outerRadius(60).innerRadius(60);
 
       const update = g.selectAll('g').data(myPie, (d, i)=>{
         return i;
       });
       update.select('path').transition().duration(500).attrTween('d', arcTween);
-      update.select('text')
-        .transition().duration(500).attr("transform", d => "translate(" + labelArc.centroid(d) + ")").text(d => d.data.key);
       const exit = update.exit();
       exit.select('path').transition().duration(500).attrTween('d', arcTween);
       exit.transition().delay(500).remove();
 
       const enter = update.enter().append('g');
       enter.append('path')
-        .style('fill', 'blue')
+        .style('fill', (d, i)=>colors(i))
         .style('stroke', 'black')
         .style('stroke-width', 2)
         .transition().duration(500).attrTween('d', arcTween);
 
-      enter.append('text')
-        .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) + ")"; })
-        .attr("dy", ".35em")
-        .text(function(d) { return d.data.key; });
       function arcTween(d,index) {
         var i = d3.interpolate(this._current, d);
         if(index === 1) console.log(this._current, i(0))
