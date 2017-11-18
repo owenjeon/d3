@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="//d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+  <div id="chart"></div>
+  <div id="options"></div>
+<script>
+function getData(){
+  const url = '/data/private_edu.csv';
+  return new Promise(function(res, rej){
+    d3.request(url)
+      .mimeType("text/csv")
+      .response(function(xhr) {
+        return d3.csvParseRows(xhr.responseText, d=>d);
+      })
+      .get(function(d){
+        res(d);
+      });
+  })
+}
+async function chart(){
+  const data = await getData();
+  const bxSize = {w:1600, h:500}
+  const margin = { top: 30, right: 30, bottom: 30, left: 50 };
+  const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
+  const svg = d3.select('#chart')
+    .append('svg')
+    .attr('width', bxSize.w).attr('height', bxSize.h)
+    .append('g')
+    .attr('transform', `translate(${margin.left} ${margin.top})`);
+  svg.append('rect').attr('width', width).attr('height', height).attr('fill', '#f5f5f5');
+
+  const timeFormat = d3.timeFormat("%Y");
+  const x = svg.append('g');
+  const y = svg.append('g');
+
+  let columns = [data[0], data[1]];
+  console.log(columns)
+
+  const keys = getKeys(columns);
+  function drawChart(d, type = "전체"){
+
+    let newD = d.map((item, idx, arr)=>{
+      return item.filter((item2, idx2)=>{
+        return type === "전체" || arr[0][idx2] === type || arr[1][idx2] === "";
+      })
+    })//.filter(item=> item[0] === "2016" || item[0] === "연도" || item[0] === "");
+    let newColumns = newD.splice(0,2);
+
+    let data = newD.map((d)=>{
+      let o = new Map();
+      d.forEach((item, i)=>{
+        const [a, b] = [newColumns[0][i], newColumns[1][i]];
+        if(b){
+          o.has(a) || o.set(a, new Map());
+          o.get(a).set(b, item);
+        }else o.set(a, item);
+      });
+      return o;
+    });
+    data = d3.nest().key(item=>item.get("연도")).entries(data);
+    data.forEach(i=>(i.key = new Date(i.key), i));
+    const keys = getKeys(newColumns);
+    const values = getAllValues(data, keys);
+
+    const xScale = d3.scaleBand().domain(data.map(i=>(i.key))).range([0,width]).padding(0.05);
+    const yScale = d3.scaleLinear().domain([0, Math.max(...values)]).range([height, 0]);
+    const xScaleSchools = d3.scaleBand().domain(data[0].values.map(i=>i.get("초중고"))).range([0,xScale.bandwidth()]).padding(0.05);
+    const xScaleEduType = d3.scaleBand().domain([...keys.keys()]).range([0,xScaleSchools.bandwidth()]).padding(0.05);
+    const xScaleSubject = [...keys.values()].map(i=>d3.scaleBand().domain(i).range([0,xScaleEduType.bandwidth()]));
+    const colors = d3.scaleOrdinal().range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+
+    const xAxis = d3.axisBottom(xScale);
+    const yAxis = d3.axisLeft(yScale);
+
+    x.attr('transform', `translate(0 ${height})`).call(xAxis.tickFormat(timeFormat));
+    y.call(yAxis);
+
+    const groupUpdate = svg.selectAll('g.graph').data(data, d=>d.key);
+    const group = groupUpdate.merge(groupUpdate.enter().append('g')).attr('class', 'graph').attr('transform', d=>`translate(${xScale(d.key)} 0)`);
+
+    const schoolsUpdate = group.selectAll('g.school').data(d=> d.values);
+    const schools = schoolsUpdate.merge(schoolsUpdate.enter().append('g')).attr('class', 'school').attr('transform', d=>`translate(${xScaleSchools(d.get("초중고"))} 0)`);
+    const eduTypeUpdate = schools.selectAll('g.edu_type').data(d=> {
+      d.forEach((v, k, m) => (typeof v !== "object" && m.delete(k)));
+      return [...d.entries()];
+    }, (d)=>{
+      return d[0];
+    });
+    eduTypeUpdate.exit().remove();
+
+    const eduType = eduTypeUpdate.merge(eduTypeUpdate.enter().append('g')).attr('class', 'edu_type').attr('transform', d=>`translate(${xScaleEduType(d[0])} 0)`);
+    const paymentsUpdate = eduType.selectAll('rect').data((d)=>[...d[1].entries()].map(i=>(i.concat([...keys.keys()].indexOf(d[0])))));
+    paymentsUpdate.merge(paymentsUpdate.enter().append('rect'))
+      .attr('x', (d) => xScaleSubject[d[2]](d[0]))
+      .attr('y', d=>height - yScale(d[1]))
+      .attr('width', d => xScaleSubject[d[2]].bandwidth())
+      .attr('height', d=>yScale(d[1]))
+      .attr('fill', d => colors(d[0] + d[2]));
+  }
+  drawChart(data);
+  console.log(["전체", ...keys.keys()])
+  const optDepth1 = d3.select('#options').append('div').selectAll('div.option1').data([["전체", ""], ...keys.entries()]).enter().append('div').attr('class', 'option1')
+  optDepth1.append('button').text(d=>(console.log(d), d[0])).on('click', (d) => drawChart(data, d[0]));
+  const optDepth2 = optDepth1.append('span').selectAll('label').data(d=>d[1]).enter().append('label');
+  optDepth2.append('input').attr('value', d=>d).attr('type', 'checkbox').text(d=>d);
+  optDepth2.append('span').text(d=>d);
+
+}
+function getKeys(columns){
+  return columns.reduce((a, b, i)=>{
+    if(!i) return b;
+    return b.reduce((a2, b2, j)=>{
+      if(!b2) return a2;
+      a2.has(a[j]) || a2.set(a[j], []);
+      a2.get(a[j]).push(b2);
+      return a2;
+    }, new Map());
+  });
+}
+
+function getAllValues(data, keys){
+  const values = [];
+  data.forEach(i=>{
+    i.values.forEach(j=>{
+      keys.forEach((v, k)=>{
+        v.forEach(l=>{
+          values.push(j.get(k).get(l));
+        })
+      })
+    })
+  });
+  return values;
+}
+
+chart();
+</script>
+</body>
+</html>

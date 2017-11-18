@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <script src="/static/d3.v4.min.js"></script>
+</head>
+<body>
+<script>
+  const table = [
+    {"name": "Eve",   "parent": ""},
+    {"name": "Cain",  "parent": "Eve"},
+    {"name": "Seth",  "parent": "Eve"},
+    {"name": "Enos",  "parent": "Seth"},
+    {"name": "Noam",  "parent": "Seth"},
+    {"name": "Abel",  "parent": "Eve"},
+    {"name": "Awan",  "parent": "Eve"},
+    {"name": "Enoch", "parent": "Awan"},
+    {"name": "Azura", "parent": "Eve"}
+  ];
+  var root = d3.stratify()
+    .id(function(d) { return d.name; })
+    .parentId(function(d) { return d.parent; })
+    (table);
+  console.log(root);
+</script>
+</body>
+</html>

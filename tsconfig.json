@@ -1,9 +1,9 @@
 {
   "compileOnSave": true,
-  "module": "es2015",
+  "module": "esnext",
   "compilerOptions": {
     "target": "es5",
-    "module": "es2015",
+    "module": "esnext",
     "sourceMap": true,
     "declaration": false,
     "emitDecoratorMetadata": true,

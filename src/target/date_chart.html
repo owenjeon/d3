@@ -43,7 +43,7 @@
   const xScale = d3.scaleBand().domain(data.map(d=>d.date)).range([0, width]).padding('0.2');
   const yScale = d3.scaleLinear().domain([0, d3.max(data.reduce((a, b)=>{return a.push(b.solve + b.correct), a}, []))]).range([height, 0]);
   const yScale2 = d3.scaleLinear().domain([0, d3.max(data.map(i=>i.score))]).range([height, 0]);
-  const color = d3.scaleOrdinal().range(["#50b0ff", "#97d0ff"])
+  const color = d3.scaleOrdinal().range(["#50b0ff", "#97d0ff"]);
 
   const xAxis = d3.axisBottom(xScale).tickFormat(d3.timeFormat('%m월 %d일'));;
   const yAxis = d3.axisLeft(yScale);

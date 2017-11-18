@@ -22,10 +22,14 @@
 <div class="chart">
     <svg></svg>
 </div>
+<div>aaa</div>
 <script>
-  const x = d3.scaleLinear().domain([20, 80]).range([0, 120]);
-  x(50); // 60r("r", 3);
-    console.log(x(20))
+  d3.select("svg") 
+    .append("circle")
+     .attr("cx", 300) 
+    .attr("cy", 300) 
+    .attr("r", 24)
+    .style("fill", "red");
 </script>
 </body>
 </html>
