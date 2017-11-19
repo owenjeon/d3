@@ -1,35 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>Egghead D3 v4</title>
-    <script src="//d3js.org/d3.v4.min.js"></script>
-    <style>
-        .chart {
-            background: lightgray;
-            border: 1px solid black;
-            width: 400px;
-            height: 400px;
-        }
-
-        svg {
-            width: 400px; height: 400px;
-        }
-    </style>
+	<meta charset="UTF-8">
+	<title>D3</title>
+	<style>
+		.axis-price .tick line { stroke: #ddd; }
+		.axis-price .domain { stroke: transparent; }
+	</style>
+	<script src="https://s.zigbang.com/js/highcharts/6.0.1/highcharts-add-more.js"></script>
 </head>
 <body>
-
-<div class="chart">
-    <svg></svg>
-</div>
-<div>aaa</div>
-<script>
-  d3.select("svg") 
-    .append("circle")
-     .attr("cx", 300) 
-    .attr("cy", 300) 
-    .attr("r", 24)
-    .style("fill", "red");
-</script>
+	<div id="chart_div" style="width:520px;height:300px;"></div>
+	<div id="transition-chart" style="height:300px;"></div>
+<div id="chart-year-tab"></div>
+	<div id="type-info-tab-chart"><div class="sub-title-box"><div class="btns"></div></div> </div>
 </body>
 </html>

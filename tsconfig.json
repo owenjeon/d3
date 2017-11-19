@@ -1,8 +1,7 @@
 {
-  "compileOnSave": true,
   "module": "esnext",
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2015",
     "module": "esnext",
     "sourceMap": true,
     "declaration": false,
