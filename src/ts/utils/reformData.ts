@@ -1,3 +1,5 @@
+import {makeDate} from 'utils/_util';
+
 export const AreaListContainer = class {
 	dataStore = new Map([['sales', []], ['rent', []]]);
 	currentData;
@@ -54,8 +56,8 @@ export const AreaListContainer = class {
 };
 
 export const GenerateRealTradeData = class {
-	static makeDate(y=2017, m=1, d=1){
-		return Date.UTC(y || 2017, m-1, 1);
+	static makeDate(y=2018, m=1, d=1){
+		return Date.UTC(y || 2018, m-1, 1);
 	}
 	static getFloorMinMax(arr, o, minMax){
 		const value = Math[minMax].apply(null, arr.filter(v=> v[0] === o.index && v[1] === o.price).map(v => v[2]));
@@ -64,19 +66,21 @@ export const GenerateRealTradeData = class {
 	days:any;
 	setCategory(firstDate){
 		this.days = [];
-		const x = (new Date(Date.UTC(2017, (new Date().getMonth())-59, 1)));
+        const now = new Date();
+        const nowYear = now.getFullYear();
+		const x = (new Date(Date.UTC(nowYear, (now.getMonth())-59, 1)));
 		const standard = Math.min(Number(x.valueOf()), firstDate);
 		this.days = (function makeDays(i, arr){
-			const x = (new Date(Date.UTC(2017, (new Date().getMonth())-i, 1)));
+			const x = (new Date(Date.UTC(nowYear, (now.getMonth())-i, 1)));
 			arr.unshift(x.valueOf());
 			return standard < x.valueOf() && makeDays(++i, arr), arr;
-		})(0, []);
-		this.days.push('DRTP');
+		})(-1, []);
+		//this.days.push('DRTP');
 		return this;
 	}
 	makeScatterData(arr) {
 		return arr.filter(v => v.rent === undefined || v.rent === 0).map(v => {
-			return [this.days.indexOf(GenerateRealTradeData.makeDate(...v.date.match(/\d+/g))), v.deposit, v['층']]
+			return [this.days.indexOf(makeDate(...v.date.match(/\d+/g))), v.deposit, v['층']]
 		})
 	}
 	setData(data){
@@ -84,7 +88,7 @@ export const GenerateRealTradeData = class {
 		const tmpData = data.graph.reduce((p:any, c:any) => {
 			const dateArr = c.date.match(/\d+/g);
 			p[dateArr === null ?
-				c.date : GenerateRealTradeData.makeDate(...dateArr)] = [
+                Date.UTC(2018, (new Date().getMonth())+1, 1) : makeDate(...dateArr)] = [
 				c.qty,
 				c.avg,
 				[c.min||c.avg, c.max||c.avg]
@@ -119,10 +123,9 @@ export const GenerateRealTradeData = class {
 			.filter(v => v)
 			.reduce((p, c:any, j, arr) => {
 				return p.map((v, i) => {
-					if(i === 1){
-						v.push({x: c[0], y: c[1][i], marker:{enabled: (j === arr.length - 1)}});
+					if(i <= 1){
+						v.push({x: c[0], y: c[1][i]});
 					}
-					else if(i === 0) v.push([c[0]].concat(c[1][i]));
 					else v.push({x:c[0], low:c[1][i][0], high: c[1][i][1],
 							lowFloor: GenerateRealTradeData.getFloorMinMax(scatterData, {index:c[0], price: c[1][i][0]}, 'min'),
 							highFloor:GenerateRealTradeData.getFloorMinMax(scatterData, {index:c[0], price: c[1][i][1]}, 'max')});
@@ -131,5 +134,4 @@ export const GenerateRealTradeData = class {
 			);
 		return [amount, price, minMax, scatterData];
 	}
-	type: 'line'
 };

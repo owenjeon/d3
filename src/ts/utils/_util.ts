@@ -11,7 +11,7 @@ export const chainD3Style = function(selection, ...arr) {
 	}
 };
 
-export const makeDate = (y=2017, m=1, d=1) => Date.UTC(y || 2017, m-1, 1);
+export const makeDate = (y=2018, m=1, d=1) => Date.UTC(y || 2018, m-1, 1);
 
 export const priceToKmoney = (price, attachTag?) => {
     if (!price) {

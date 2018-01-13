@@ -17,7 +17,7 @@
 <body>
   <div class="chart"></div>
   <script>
-    const bxSize = {w:800, h:500}
+    const bxSize = {w:800, h:500};
     const margin = { top: 30, right: 30, bottom: 30, left: 50 };
     const [width, height] = [bxSize.w - margin.left - margin.right, bxSize.h - margin.top - margin.bottom];
     const svg = d3.select('.chart')
@@ -96,7 +96,7 @@
         const line = d3.line()
           .x(d => (xScale(d.id)))
           .y(d => yScale(d[v])).curve(d3.curveMonotoneX);
-        path.transition().duration(600).attr('d', line(data)).attr('fill', 'none').attr('stroke', colors(datas.columns.indexOf(v))).attr('stroke-width', 2)
+        path.datum(data).transition().duration(600).attr('d', line).attr('fill', 'none').attr('stroke', colors(datas.columns.indexOf(v))).attr('stroke-width', 2)
       }
       d3.select('body').append('div').selectAll('button').data(types).enter().append('button').text(d=>d)
         .on('click', function(d){

@@ -7,26 +7,11 @@ import {GenerateChart} from 'utils/chartGernertor';
 const apis_host = 'https://apis.zigbang.com';
 
 
-const days = [];
-for (let i = 0; i < 24; i++) {
-	const x = new Date();
-	x.setDate(1);
-	x.setMonth(x.getMonth() - i);
-	days.unshift(x);
-}
-const tmpData = {
-	"range": [[12.7, 18.3], [12, 17.1], [12, 20.8], [12.2, 15.5], [14.4, 14.4], [17.2, 17.2], [18.1, 18.1], [11.4, 22.6], [13.6, 19.6], [12.6, 22.4], [11.8, 20.7], [11.6, 23.7], [11, 23.3], [10.7, 23.7], [11.6, 21.8], [9.2, 23.8], [10.5, 21.4], [13.5, 24.8], [17.8, 25.7], [16.5, 25], [16.7, 29.8], [15.5, 29.6], [14.5, 27.8], [14.3, 27.7]],
-	"average": [15.3, 14.6, 15.7, 13.7, 14.4, 17.2, 18.1, 17.8, 16.3, 17.7, 16.8, 17.7, 17.6, 17.5, 17.7, 16.4, 15.4, 18.3, 21.3, 21.4, 23.8, 23, 22.1, 21.5],
-	"trade": [3, 1, 1, 1, 1, 2, 1, 0, 1, 1, 0, 1, 1, 4, 1]
-};
-
-
-
 class AreaContainer {
 	chartContainer;
 	listContainer;
 	saleTypes:any;
-	currentData = {danjiId: undefined, roomTypeId: undefined, saleType: [], group:
+	currentData:any = {danjiId: undefined, roomTypeId: undefined, saleType: [], group:
 		[{type:'sales', tit:'매매'}, {type:'rent', tit: '전세'}].map(v => Object.assign(v, {isActivate: false, data:undefined}))
 	};
 	dataStore:any = new Map();
