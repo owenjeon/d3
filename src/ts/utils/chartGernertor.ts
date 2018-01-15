@@ -21,9 +21,6 @@ export const GenerateChart:any = class {
 		sales: {amount: '#2D60A3', price: '#2D60A3', minMax:'rgb(124,181,236)', eachPoint: 'rgba(78, 127, 183, .5)'},
 		rent: {amount: '#ef7a00', price: '#ef7a00', minMax:'rgb(255, 174, 89)', eachPoint: 'rgb(255, 174, 89)'}
 	};
-	static deepClone (obj) {
-		return JSON.parse(JSON.stringify(obj))
-	}
 	static priceToKmoney(price, attachTag) {
 		if (!price) {
 			return 0;
@@ -61,7 +58,7 @@ export const GenerateChart:any = class {
 		});
 	}
 	async addSeriesData(saleType, data){
-		this.createSeriesSet(saleType, this.setData(data));
+		this.createSeriesSet(saleType, data);
 	}
 	removeSeriesData(saleType){
 		this.seriesList.has(saleType) && [...this.seriesList.get(saleType).values()].forEach(v => {
@@ -70,15 +67,15 @@ export const GenerateChart:any = class {
 	}
 	drawChangedData(saleType) {
 	}
-	setCategories(firstDate){
+	setCategories(result){
+		this.generateData.setCategory(result);
 	}
 	setMaxXAxis(saleType){
 	}
 
 	changeSeriesData(saleType, data){
 		let seriesList = this.seriesList.get(saleType);
-		const d = this.setData(data);
-		this.setSeriesData(seriesList, d)
+		this.setSeriesData(seriesList, data)
 	}
 	setSeriesData(seriesList, [amount, price, minMax, scatterData]){
 		seriesList.get('area').bindData(minMax).transition(d3Transition, 1000);
@@ -112,24 +109,27 @@ export const GenerateChart:any = class {
 
 		this.setSeriesData(series, [amount, price, minMax, scatterData]);
 	}
-	setAxis(amount, price, minMax){
-		const priceRange = d3.extent(minMax.map(d => [d.low, d.high]).reduce((p, c) => p.concat(c), []));
-		this.axis.xTime.setDomain(d3.extent(this.generateData.days), [0, this.chartSize.w])
-			.setAxis('axisBottom', (o) => o.tickFormat(d3.timeFormat("%Y") || '').ticks(d3.timeYear))
-			.render(this.container, 'x-axis', o => o.attr('transform', `translate(0, ${this.chartSize.h})`));
+	setAxis(dataList){
+		const [amount, price, minMax] = dataList.reduce((p,c) => {
+			return p.map((v, i) => p[i].concat(c[i]))
+		});
 
-		this.axis.yRange.setDomain(priceRange, [this.chartSize.h * 0.8, 0])
-			.setAxis('axisLeft', o => o.tickFormat(d => priceToKmoney(d)).tickSize(-this.chartSize.w).ticks(6))
-			.render(this.container, 'axis-price');
+        console.log(amount, price, minMax);
+		const priceRange = d3.extent(minMax.map(d => [d.low, d.high]).reduce((p, c) => p.concat(c), []));
+		this.axis.xTime
+            .setDomain(d3.extent(this.generateData.days), [0, this.chartSize.w])
+            .transition(d3Transition, 1000);
+
+		this.axis.yRange
+            .setDomain(priceRange, [this.chartSize.h * 0.8, 0])
+            .transition(d3Transition, 1000);
 
 		this.axis.yAmount.setDomain(d3.extent(amount.map(d => d.y)), [this.chartSize.h / 5, 0]);
 	}
 	resize(){
 		
 	}
-	render({element, data}){
-		this.generateData.setCategory(makeDate(...[].concat(data.graph[0].date.match(/\d+/g))));
-		const [amount, price, minMax, scatterData] = this.setData(data);
+    init(element){
 		const div = d3.select(element);
 		const svg = div.append('svg').attr('height', div.style('height')).attr('width', div.style('width'));
 		const margin = [10, 10, 50, 60];
@@ -139,11 +139,13 @@ export const GenerateChart:any = class {
 		};
 		this.container = svg.append('g').attr('transform', `translate(${margin[3]}, ${margin[0]})`);
 		svg.append("defs").append("clipPath").attr("id", "clip").append("rect").attr("width", this.chartSize.w).attr("height", this.chartSize.h);
-		this.axis.xTime = new Axis('scaleTime');
-		this.axis.yRange = new Axis('scaleLinear');
+		this.axis.xTime = new Axis('scaleTime')
+			.setEle(this.container.append('g'),'x-axis', o => o.attr('transform', `translate(0, ${this.chartSize.h})`))
+			.setAxis('axisBottom', (o) => o.tickFormat(d3.timeFormat("%Y") || '').ticks(d3.timeYear));
+		this.axis.yRange = new Axis('scaleLinear')
+			.setEle(this.container.append('g'), 'axis-price')
+			.setAxis('axisLeft', o => o.tickFormat(d => priceToKmoney(d)).tickSize(-this.chartSize.w).ticks(6));
 		this.axis.yAmount = new Axis('scaleLinear');
-		this.setAxis(amount, price, minMax);
-		this.createSeriesSet('sales', [amount, price, minMax, scatterData]);
 		const axis = this.axis;
 		this.zoom = d3.zoom()
 			.scaleExtent([1, 40])

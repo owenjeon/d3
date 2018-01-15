@@ -64,7 +64,8 @@ export const GenerateRealTradeData = class {
 		return isFinite(value) && value;
 	}
 	days:any;
-	setCategory(firstDate){
+	setCategory(results){
+        const firstDate = Math.min(...results.filter(v => v.state && (v.data.graph || v.data).length > 0).map((v) => makeDate(...[].concat((v.data.graph || v.data)[0].date.match(/\d+/g)))));
 		this.days = [];
         const now = new Date();
         const nowYear = now.getFullYear();

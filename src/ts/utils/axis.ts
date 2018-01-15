@@ -4,6 +4,7 @@ import {_pipe} from 'utils/_util';
 export class Axis {
 	scale;
 	axis;
+    ele;
 	g;
 	constructor(type){
         this.scale = d3[type]()
@@ -18,8 +19,16 @@ export class Axis {
 		return this;
 	}
 
-	render(container, cls, addFn?) {
-        this.g = _pipe(() => container.append('g').attr('class', cls), addFn)().call(this.axis);
+    setEle(element, cls, addFn?){
+        this.ele = _pipe(() => element.append('g').attr('class', cls), addFn)();
+        return this;
+	}
+    transition(transition, duration=5000, delay= 0){
+        this.ele.transition().call(transition, duration, delay).call(this.axis);
+        return this;
+    }
+	render() {
+        this.ele.call(this.axis);
 		return this;
 	}
 }

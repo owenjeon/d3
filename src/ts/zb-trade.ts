@@ -27,10 +27,10 @@ class AreaContainer {
 	}
 
 	async init({danjiId, roomTypeId, saleType, element}){
-		const data = await this.getData(danjiId, roomTypeId, saleType);
 		this.putSaleTypeBtn(document.querySelector('#type-info-tab-chart .sub-title-box .btns'), saleType);
 		this.chartContainer.putDurationFilterBtns(document.getElementById('chart-year-tab'), 'item');
-		this.chartContainer.render({element, data});
+		this.chartContainer.init(element);
+        this.update({danjiId, roomTypeId});
 	}
 	async getData(danjiId, roomTypeId, saleType){
 		const graphId = `${danjiId}-${roomTypeId}-${saleType}`;
@@ -51,10 +51,12 @@ class AreaContainer {
 					const data = await this.getData(danjiId, roomTypeId, v.type);
 					return {data, type: v.type, state: true};
 				} else {
-					return {type: v.type, state: false};
+					return {data: undefined, type: v.type, state: false};
 				}
 			})
 		);
+        this.chartContainer.setCategories(result);
+        this.chartContainer.setAxis(result.map((v:any) => v.data && (v.data = this.reformData(v.data))).filter(v => v));
 		result.forEach((o:any) => {
 			if(!o.state) {
 				this.chartContainer.removeSeriesData(o.type);
@@ -63,6 +65,9 @@ class AreaContainer {
 			}
 		});
 		this.chartContainer.drawChangedData(this.currentData.saleType);
+	}
+	reformData(d){
+		return this.chartContainer.setData(d);
 	}
 	putSaleTypeBtn(ele, saleType){
 		const btns = [];
